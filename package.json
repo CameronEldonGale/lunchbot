@@ -1,0 +1,16 @@
+{
+  "name": "lunch-bot",
+  "version": "1.0.0",
+  "description": "scraper to get lunch from boneappetite",
+  "main": "handler.js",
+  "dependencies": {
+    "axios": "^0.17.1",
+    "cheerio": "^1.0.0-rc.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Cameron Gale",
+  "license": "ISC"
+}
