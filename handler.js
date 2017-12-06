@@ -55,7 +55,7 @@ function formatMessage(message) {
 function post(message) {
 
   const web = new WebClient(token);
-  web.chat.postMessage('lunch', message,{ as_user: true }, function(err, res) {
+  web.chat.postMessage('lunch', message, { as_user: true }, function(err, res) {
     if (err) {
       console.log('Error:', err);
     } else {
