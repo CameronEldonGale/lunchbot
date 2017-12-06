@@ -22,11 +22,40 @@ module.exports.post = (event, context, callback) => {
   callback(null, response);
 
 };
+function formatMessage(message) {
+  const obligatoryBeeping = '*BEEP BOOP BEEEEP*'
+  const header = ':knife_fork_plate: *Today’s Lunch* :knife_fork_plate:';
+  message = message.replace(/\n/, '');
+  message = message.replace(/\[L\]/, '');
+  message = message.trim();
+  message = message.replace(/\n/g, '*RETURN*');
+  message = message.replace(/\s{2,}/g, '');
+  message = message.replace(/\|/g, '*RETURN*');
+  message = message.replace(/(\*RETURN\*)+/g,'\n')
+  message = message.replace(/\n\s\n/g, '\n');
+
+
+  let lines = message.split('\n');
+
+  lines = lines.map((line, i) => {
+    line = line.trim();
+    if (i > 0) {
+      line = `• ${ line }`;
+    }
+    return line;
+  })
+
+  lines[0] = `*${lines[0]}*`;
+
+  const prettyMessage = lines.join('\n');
+
+  return `${ obligatoryBeeping }\n${ header }\n${ prettyMessage }`
+}
 
 function post(message) {
 
   const web = new WebClient(token);
-  web.chat.postMessage('lunch', message, function(err, res) {
+  web.chat.postMessage('lunch', message,{ as_user: true }, function(err, res) {
     if (err) {
       console.log('Error:', err);
     } else {
@@ -114,3 +143,8 @@ function getLunch(weeklyMenuLink) {
   })
 })
 }
+
+scrape().then((todaysLunch) => {
+  const lunch = formatMessage(todaysLunch);
+  post(lunch)
+})
