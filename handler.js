@@ -1,13 +1,13 @@
 'use strict';
 const axios = require('axios');
 const cheerio = require('cheerio');
+const WebClient = require('@slack/client').WebClient;
 
-let result = 'um something went wrong'
-
+const token = process.env.token || '';
 
 module.exports.post = (event, context, callback) => {
-  const token = process.env.token
-  const message = `Go Serverless v1.0! Your function executed successfully! result: ${ result }`;
+
+  const message = `Your function executed successfully!`;
   const response = {
     statusCode: 200,
     body: JSON.stringify({
@@ -15,21 +15,37 @@ module.exports.post = (event, context, callback) => {
       input: event,
     }),
   };
-  scraper()
+  scrape().then((todaysLunch) => {
+    post(todaysLunch)
+  })
 
   callback(null, response);
 
-  // Use this code if you don't use the http event with the LAMBDA-PROXY integration
-  // callback(null, { message: 'Go Serverless v1.0! Your function executed successfully!', event });
 };
 
-function scraper() {
+function post(message) {
+
+  const web = new WebClient(token);
+  web.chat.postMessage('lunch', message, function(err, res) {
+    if (err) {
+      console.log('Error:', err);
+    } else {
+      console.log('Message sent: ', res);
+    }
+  });
+
+}
+
+function scrape() {
   return new Promise(function(resolve, reject) {
     getWeeklyMenu()
       .then((weeklyMenuLink) => {
         console.log('weekly menu', weeklyMenuLink);
-        getLunch(weeklyMenuLink)
-
+        return getLunch(weeklyMenuLink)
+          .then((todaysLunch) => {
+            console.log('lunch: ',todaysLunch);
+            return resolve(todaysLunch);
+          })
       })
       .catch((err) => {
         return reject(err);
@@ -58,6 +74,25 @@ function getWeeklyMenu() {
 }
 
 function getLunch(weeklyMenuLink) {
+  const rightNow = new Date();
+  const week = {
+    0:  'Sunday',
+    1: 'Monday',
+    2: 'Tuesday',
+    3: 'Wednesday',
+    4: 'Thursday',
+    5: 'Friday',
+    6: 'Saturday',
+    Sunday: [],
+    Monday: [13,31],
+    Tuesday: [14,32],
+    Wednesday: [15,33],
+    Thursday: [16,34],
+    Friday: [17,35],
+    Saturday: [],
+  }
+  const today = week[rightNow.getDay()];
+
   console.log('fetching today\'s lunch...');
   return new Promise(function(resolve, reject) {
     axios.get(weeklyMenuLink)
@@ -65,14 +100,17 @@ function getLunch(weeklyMenuLink) {
         const $ = cheerio.load(response.data);
         const cells = $('.day').toArray();
         const text = cells.map(function(el, i) {
-            // this === el
-            return $(el).children().last().text() || 'nothing today';
+          const menuText = $(el).children().last().text() || null;
+
+          if (week[today].includes(i) && menuText) {
+            resolve(menuText)
+          }
+
+            return menuText;
           });
-        text.forEach((item) => {
-          console.log(item);
-        })
-  });
+  })
+  .catch((err) => {
+    return reject(err);
+  })
 })
 }
-
-scraper();

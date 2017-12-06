@@ -4,6 +4,7 @@
   "description": "scraper to get lunch from boneappetite",
   "main": "handler.js",
   "dependencies": {
+    "@slack/client": "^3.14.2",
     "axios": "^0.17.1",
     "cheerio": "^1.0.0-rc.2"
   },
