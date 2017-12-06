@@ -68,9 +68,11 @@ function getLunch(weeklyMenuLink) {
         const cells = $('.cell_menu_item').toArray();
         const text = cells.map(function(i, el) {
             // this === el
-            return $(this).last().text();
-          })
-        console.log(text);
+            return $(i).children().last().text();
+          });
+        text.forEach((item) => {
+          console.log(item);
+        })
   });
 })
 }
