@@ -15,13 +15,15 @@ module.exports.post = (event, context, callback) => {
       input: event,
     }),
   };
+
   scrape().then((todaysLunch) => {
-    post(todaysLunch)
+    const lunch = formatMessage(todaysLunch);
+    post(lunch)
   })
 
   callback(null, response);
-
 };
+
 function formatMessage(message) {
   const obligatoryBeeping = '*BEEP BOOP BEEEEP*'
   const header = ':knife_fork_plate: *Today’s Lunch* :knife_fork_plate:';
@@ -143,8 +145,3 @@ function getLunch(weeklyMenuLink) {
   })
 })
 }
-
-scrape().then((todaysLunch) => {
-  const lunch = formatMessage(todaysLunch);
-  post(lunch)
-})
