@@ -63,12 +63,10 @@ function getLunch(weeklyMenuLink) {
     axios.get(weeklyMenuLink)
       .then((response) => {
         const $ = cheerio.load(response.data);
-        const table = $('.container').children('.main');
-        const chefsTable = table.children();
-        const cells = $('.cell_menu_item').toArray();
-        const text = cells.map(function(i, el) {
+        const cells = $('.day').toArray();
+        const text = cells.map(function(el, i) {
             // this === el
-            return $(i).children().last().text();
+            return $(el).children().last().text() || 'nothing today';
           });
         text.forEach((item) => {
           console.log(item);
