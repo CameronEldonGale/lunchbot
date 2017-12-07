@@ -55,7 +55,7 @@ function formatMessage(todaysLunch) {
 
   const prettyMessage = lines.join('\n');
 
-  return `${ obligatoryBeeping }\n${ header }\n${ prettyMessage }\n You can view the weekly menu @: ${ weeklyMenuLink}`
+  return `${ obligatoryBeeping }\n${ header }\n${ prettyMessage }\n You can view this week's menu @: ${ weeklyMenuLink}`
 }
 
 function post(message) {
@@ -150,8 +150,8 @@ function getLunch(weeklyMenuLink) {
 })
 }
 
-// scrape().then((todaysLunch) => {
-//   const lunch = formatMessage(todaysLunch);
-//   console.log('lunch: ', lunch);
-//   // post(lunch)
-// })
+scrape().then((todaysLunch) => {
+  const lunch = formatMessage(todaysLunch);
+  console.log('lunch: ', lunch);
+  post(lunch)
+})
