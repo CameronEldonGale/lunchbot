@@ -18,15 +18,19 @@ module.exports.post = (event, context, callback) => {
 
   scrape().then((todaysLunch) => {
     const lunch = formatMessage(todaysLunch);
+    console.log(lunch);
     post(lunch)
   })
 
   callback(null, response);
 };
 
-function formatMessage(message) {
+function formatMessage(todaysLunch) {
   const obligatoryBeeping = '*BEEP BOOP BEEEEP*'
   const header = ':knife_fork_plate: *Today’s Lunch* :knife_fork_plate:';
+  let message = todaysLunch.menuText
+  const { weeklyMenuLink } = todaysLunch;
+
   message = message.replace(/\n/, '');
   message = message.replace(/\[L\]/, '');
   message = message.trim();
@@ -51,7 +55,7 @@ function formatMessage(message) {
 
   const prettyMessage = lines.join('\n');
 
-  return `${ obligatoryBeeping }\n${ header }\n${ prettyMessage }`
+  return `${ obligatoryBeeping }\n${ header }\n${ prettyMessage }\n You can view the weekly menu @: ${ weeklyMenuLink}`
 }
 
 function post(message) {
@@ -74,7 +78,7 @@ function scrape() {
         console.log('weekly menu', weeklyMenuLink);
         return getLunch(weeklyMenuLink)
           .then((todaysLunch) => {
-            console.log('lunch: ',todaysLunch);
+            // console.log('lunch: ',todaysLunch);
             return resolve(todaysLunch);
           })
       })
@@ -134,7 +138,7 @@ function getLunch(weeklyMenuLink) {
           const menuText = $(el).children().last().text() || null;
 
           if (week[today].includes(i) && menuText) {
-            resolve(menuText)
+            resolve({ menuText, weeklyMenuLink })
           }
 
             return menuText;
@@ -145,3 +149,9 @@ function getLunch(weeklyMenuLink) {
   })
 })
 }
+
+// scrape().then((todaysLunch) => {
+//   const lunch = formatMessage(todaysLunch);
+//   console.log('lunch: ', lunch);
+//   // post(lunch)
+// })
