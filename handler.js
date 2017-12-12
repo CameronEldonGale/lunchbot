@@ -25,11 +25,25 @@ module.exports.post = (event, context, callback) => {
   callback(null, response);
 };
 
-function formatMessage(todaysLunch) {
+function formatMessage(todaysMenu) {
   const obligatoryBeeping = '*BEEP BOOP BEEEEP*'
   const header = ':knife_fork_plate: *Today’s Lunch* :knife_fork_plate:';
-  let message = todaysLunch.menuText
-  const { weeklyMenuLink } = todaysLunch;
+  const { weeklyMenuLink } = todaysMenu;
+  let prettyMessage = '';
+
+  if (Array.isArray(todaysMenu.menuText)) {
+    todaysMenu.menuText.forEach((menuItem)=>{
+      prettyMessage += `\n${ cleanUp(menuItem) }\n`;
+    })
+  }else {
+    prettyMessage = cleanUp(todaysMenu.menuText);
+  }
+
+
+  return `${ obligatoryBeeping }\n${ header }\n${ prettyMessage }\n You can view this week's menu @: ${ weeklyMenuLink}`
+}
+
+function cleanUp(message) {
 
   message = message.replace(/\n/, '');
   message = message.replace(/\[L\]/, '');
@@ -52,10 +66,9 @@ function formatMessage(todaysLunch) {
   })
 
   lines[0] = `*${lines[0]}*`;
-
   const prettyMessage = lines.join('\n');
 
-  return `${ obligatoryBeeping }\n${ header }\n${ prettyMessage }\n You can view this week's menu @: ${ weeklyMenuLink}`
+  return prettyMessage;
 }
 
 function post(message) {
@@ -109,40 +122,47 @@ function getWeeklyMenu() {
 }
 
 function getLunch(weeklyMenuLink) {
-  const rightNow = new Date();
-  const week = {
-    0:  'Sunday',
-    1: 'Monday',
-    2: 'Tuesday',
-    3: 'Wednesday',
-    4: 'Thursday',
-    5: 'Friday',
-    6: 'Saturday',
-    Sunday: [],
-    Monday: [13,31],
-    Tuesday: [14,32],
-    Wednesday: [15,33],
-    Thursday: [16,34],
-    Friday: [17,35],
-    Saturday: [],
-  }
-  const today = week[rightNow.getDay()];
-
   console.log('fetching today\'s lunch...');
+
   return new Promise(function(resolve, reject) {
     axios.get(weeklyMenuLink)
       .then((response) => {
         const $ = cheerio.load(response.data);
         const cells = $('.day').toArray();
+        const weeklyMenu = {};
+        let row;
+
         const text = cells.map(function(el, i) {
           const menuText = $(el).children().last().text() || null;
 
-          if (week[today].includes(i) && menuText) {
-            resolve({ menuText, weeklyMenuLink })
+          if (i%6 === 0 && menuText) {
+            weeklyMenu[menuText] = [];
+            row = menuText;
+          }
+
+          if (row && i%6 !== 0) {
+            weeklyMenu[row].push(menuText)
           }
 
             return menuText;
           });
+
+          delete weeklyMenu['SOUP'];
+          delete weeklyMenu['FARM TO FORK SALAD BAR'];
+          delete weeklyMenu['BEVERAGE'];
+
+          // console.log(weeklyMenu);
+          const today = new Date().getDay() - 1;
+          const todaysMenu = [];
+
+          for (let row in weeklyMenu) {
+            if (weeklyMenu.hasOwnProperty(row)) {
+              if (weeklyMenu[row][today]) {
+                todaysMenu.push(weeklyMenu[row][today]);              }
+            }
+          }
+
+          return resolve({ weeklyMenuLink, menuText: todaysMenu});
   })
   .catch((err) => {
     return reject(err);
@@ -150,8 +170,8 @@ function getLunch(weeklyMenuLink) {
 })
 }
 
-scrape().then((todaysLunch) => {
-  const lunch = formatMessage(todaysLunch);
-  console.log('lunch: ', lunch);
-  post(lunch)
-})
+// scrape().then((todaysMenu) => {
+//   const lunch = formatMessage(todaysMenu);
+//   console.log('lunch: ', lunch);
+//   // post(lunch)
+// })
